@@ -2494,7 +2494,9 @@ async function sendTest(){
     const kind=p.morning?'morning':'evening',data=previewData(kind);
     const response=await fetch('/.netlify/functions/send-reminder',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({to:p.email,subject:data.subject,html:template(kind)})});
     const result=await response.json().catch(()=>({}));if(!response.ok)throw Error(result.error||'Chưa gửi được email.');
-    $('emailSettingsStatus').textContent='Đã gửi email thử. Kiểm tra hộp thư đến và thư rác của bạn.';
+      try{localStorage.setItem(key+'-last-sent',JSON.stringify({at:new Date().toISOString(),id:result.id||''}))}catch{}
+      $('emailSettingsError').textContent='';
+      $('emailSettingsStatus').textContent='Đã gửi email thử thành công. Kiểm tra hộp thư đến và thư rác của bạn.';
   }catch(error){$('emailSettingsError').textContent=location.protocol==='file:'?'Hãy mở bản đã deploy trên Netlify rồi mới gửi thử email.':error.message}
   finally{button.disabled=false;button.textContent='Gửi thử email'}
 }
@@ -2502,7 +2504,7 @@ let previewKind='morning';
 const frame=document.createElement('iframe');frame.id='emailPreviewFrame';frame.title='Mẫu email nhắc học';frame.setAttribute('sandbox','');frame.setAttribute('referrerpolicy','no-referrer');$('emailPreviewBody').replaceWith(frame);
 const download=document.createElement('button');download.className='btn ghost';download.type='button';download.textContent='Tải mẫu HTML';download.id='emailTemplateDownload';dialog.querySelector('.email-preview-tabs').append(download);download.onclick=()=>{const url=URL.createObjectURL(new Blob([template(previewKind)],{type:'text/html;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=`CharterPrep-email-${previewKind}.html`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
 function showPreview(kind){previewKind=kind;const p=previewData(kind);$('emailPreviewTo').textContent=p.to;$('emailPreviewTime').textContent=p.time;$('emailPreviewSubject').textContent=p.subject;frame.srcdoc=template(kind);$('emailPreviewDecision').textContent=p.decision;$('emailPreviewMorning').setAttribute('aria-pressed',String(kind==='morning'));$('emailPreviewEvening').setAttribute('aria-pressed',String(kind==='evening'))}
-$('emailPreviewOpen').onclick=()=>{showPreview($('emailMorningEnabled').checked?'morning':'evening');dialog.showModal()};$('emailPreviewMorning').onclick=()=>showPreview('morning');$('emailPreviewEvening').onclick=()=>showPreview('evening');$('emailPreviewClose').onclick=()=>dialog.close();fill(saved||defaults);if(saved)$('emailSettingsStatus').textContent='Đã có tuỳ chọn lưu trên trình duyệt này. Chưa kết nối gửi thư.';window.EmailReminderSettings={validate,previewData,getSaved:()=>saved?JSON.parse(JSON.stringify(saved)):null};
+$('emailPreviewOpen').onclick=()=>{showPreview($('emailMorningEnabled').checked?'morning':'evening');dialog.showModal()};$('emailPreviewMorning').onclick=()=>showPreview('morning');$('emailPreviewEvening').onclick=()=>showPreview('evening');$('emailPreviewClose').onclick=()=>dialog.close();fill(saved||defaults);if(saved){let lastSent=null;try{lastSent=JSON.parse(localStorage.getItem(key+'-last-sent')||'null')}catch{};$('emailSettingsStatus').textContent=lastSent?.at?'Đã gửi email thử thành công. Kiểm tra hộp thư đến và thư rác của bạn.':'Đã có tuỳ chọn lưu trên trình duyệt này. Chưa gửi email thử.'};window.EmailReminderSettings={validate,previewData,getSaved:()=>saved?JSON.parse(JSON.stringify(saved)):null};
 $('emailSendTest').onclick=sendTest;
 })();
 
