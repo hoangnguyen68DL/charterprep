@@ -1,8 +1,4 @@
-const json = (statusCode, body) => ({
-  statusCode,
-  headers: { 'content-type': 'application/json; charset=utf-8' },
-  body: JSON.stringify(body)
-});
+const json = (statusCode, body) => Response.json(body, { status: statusCode });
 
 export default async (request) => {
   if (request.method !== 'POST') return json(405, { error: 'Method not allowed' });
